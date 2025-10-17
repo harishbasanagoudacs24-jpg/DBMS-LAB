@@ -1,0 +1,120 @@
+create database storex;
+use storex;
+show databases;
+CREATE TABLE branch (
+    branch_name VARCHAR(50) PRIMARY KEY,
+    branch_city VARCHAR(50),
+    assets DECIMAL(15,2)
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(50),
+    customer_city VARCHAR(50)
+);
+
+CREATE TABLE account (
+    account_number INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    balance DECIMAL(15,2),
+    FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE depositor (
+    customer_id INT,
+    account_number INT,
+    PRIMARY KEY (customer_id, account_number),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (account_number) REFERENCES account(account_number)
+);
+
+CREATE TABLE loan (
+    loan_number INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    amount DECIMAL(15,2),
+    FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE borrower (
+    customer_id INT,
+    loan_number INT,
+    PRIMARY KEY (customer_id, loan_number),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (loan_number) REFERENCES loan(loan_number)
+);
+-- Branches
+INSERT INTO branch VALUES 
+('SBI_ResidencyRoad', 'Bangalore', 100000000),
+('ICICI_MGroad', 'Bangalore', 80000000),
+('HDFC_Kormangala', 'Bangalore', 90000000),
+('SBI_Indiranagar', 'Bangalore', 75000000),
+('Axis_Jayanagar', 'Bangalore', 60000000);
+
+-- Customers
+INSERT INTO customer VALUES 
+(1, 'Amit Kumar', 'Bangalore'),
+(2, 'Sneha Reddy', 'Hyderabad'),
+(3, 'John Paul', 'Mumbai'),
+(4, 'Meera Sharma', 'Delhi'),
+(5, 'Arjun Mehta', 'Bangalore');
+
+-- Accounts
+INSERT INTO account VALUES 
+(101, 'SBI_ResidencyRoad', 50000),
+(102, 'SBI_ResidencyRoad', 75000),
+(103, 'HDFC_Kormangala', 30000),
+(104, 'SBI_ResidencyRoad', 80000),
+(105, 'ICICI_MGroad', 60000);
+
+-- Depositors
+INSERT INTO depositor VALUES 
+(1, 101),
+(1, 102),
+(2, 103),
+(3, 104),
+(1, 104); -- Amit Kumar has 3 accounts, 2 of them at SBI_ResidencyRoad
+
+-- Loans
+INSERT INTO loan VALUES 
+(201, 'SBI_ResidencyRoad', 200000),
+(202, 'HDFC_Kormangala', 300000),
+(203, 'ICICI_MGroad', 150000),
+(204, 'Axis_Jayanagar', 100000),
+(205, 'SBI_ResidencyRoad', 250000);
+
+-- Borrowers
+INSERT INTO borrower VALUES 
+(1, 201),
+(2, 202),
+(3, 203),
+(4, 204),
+(5, 205);
+SELECT 
+    branch_name, 
+    assets / 100000 AS "assets in lakhs"
+FROM 
+    branch;
+SELECT 
+    d.customer_id, 
+    c.customer_name, 
+    a.branch_name
+FROM 
+    depositor d
+JOIN 
+    account a ON d.account_number = a.account_number
+JOIN 
+    customer c ON d.customer_id = c.customer_id
+GROUP BY 
+    d.customer_id, a.branch_name, c.customer_name
+HAVING 
+    COUNT(d.account_number) >= 2;
+CREATE VIEW branch_loan_summary AS
+SELECT 
+    branch_name,
+    SUM(amount) AS total_loan_amount
+FROM 
+    loan
+GROUP BY 
+    branch_name;
+SELECT * FROM branch_loan_summary;
+
